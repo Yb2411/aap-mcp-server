@@ -242,11 +242,16 @@ export const reformatLightspeedTool = (
  */
 export const reformatControllerTool = (
   tool: AAPMcpToolDefinition,
+  standaloneController = false,
 ): AAPMcpToolDefinition => {
-  tool.pathTemplate = tool.pathTemplate?.replace(
-    "/api/v2",
-    "/api/controller/v2",
-  );
+  // Behind the platform gateway the controller API lives under
+  // /api/controller/v2; a standalone controller (AWX) serves it at /api/v2.
+  if (!standaloneController) {
+    tool.pathTemplate = tool.pathTemplate?.replace(
+      "/api/v2",
+      "/api/controller/v2",
+    );
+  }
 
   // Remove api_ prefix if it exists (backwards compatibility),
   // then always prepend controller.
@@ -258,7 +263,9 @@ export const reformatControllerTool = (
 /**
  * Gets reformat functions for all supported services
  */
-export const getReformatFunctions = (): Record<
+export const getReformatFunctions = (
+  standaloneController = false,
+): Record<
   string,
   (tool: AAPMcpToolDefinition) => AAPMcpToolDefinition | false
 > => {
@@ -266,7 +273,7 @@ export const getReformatFunctions = (): Record<
     eda: reformatEdaTool,
     gateway: reformatGatewayTool,
     galaxy: reformatGalaxyTool,
-    controller: reformatControllerTool,
+    controller: (tool) => reformatControllerTool(tool, standaloneController),
     lightspeed: reformatLightspeedTool,
   };
 };
@@ -358,9 +365,10 @@ export const loadSingleSpec = async (
 export const loadOpenApiSpecs = async (
   servicesConfig: ServiceConfig[],
   baseUrl: string,
+  standaloneController = false,
 ): Promise<OpenApiSpecEntry[]> => {
   const defaultConfigs = getDefaultServiceConfigs(baseUrl);
-  const reformatFunctions = getReformatFunctions();
+  const reformatFunctions = getReformatFunctions(standaloneController);
 
   // Build spec entries from configuration
   const enabledServiceNames = servicesConfig.map((s) => s.name);

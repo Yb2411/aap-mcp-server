@@ -124,6 +124,13 @@ const allowWriteOperations = getBooleanConfig(
   localConfig.allow_write_operations,
 );
 
+// A standalone controller (AWX) has no platform gateway: users are read from
+// /api/v2/me/ and controller paths are served at /api/v2.
+const standaloneController = getBooleanConfig(
+  "STANDALONE_CONTROLLER",
+  localConfig.standalone_controller,
+);
+
 // Initialize allowed operations list based on configuration
 const allowedOperations = allowWriteOperations
   ? ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
@@ -177,7 +184,8 @@ const extractBearerToken = (
 // Validate authorization token
 const validateToken = async (bearerToken: string): Promise<UserInfo> => {
   try {
-    const response = await fetch(`${CONFIG.BASE_URL}/api/gateway/v1/me/`, {
+    const mePath = standaloneController ? "/api/v2/me/" : "/api/gateway/v1/me/";
+    const response = await fetch(`${CONFIG.BASE_URL}${mePath}`, {
       headers: {
         Authorization: `Bearer ${bearerToken}`,
         Accept: "application/json",
@@ -228,7 +236,11 @@ const getToolsetForTool = (toolName: string): string => {
 
 // Generate tools from OpenAPI specs
 const generateTools = async (): Promise<AAPMcpToolDefinition[]> => {
-  const openApiSpecs = await loadOpenApiSpecs(servicesConfig, CONFIG.BASE_URL);
+  const openApiSpecs = await loadOpenApiSpecs(
+    servicesConfig,
+    CONFIG.BASE_URL,
+    standaloneController,
+  );
   let rawToolList: AAPMcpToolDefinition[] = [];
 
   for (const spec of openApiSpecs) {
@@ -817,6 +829,9 @@ async function main(): Promise<void> {
   console.log(`  Toolsets: ${Object.keys(allToolsets).length} enabled`);
   console.log(
     `  Write operations: ${allowWriteOperations ? "ENABLED" : "DISABLED"}`,
+  );
+  console.log(
+    `  Standalone controller: ${standaloneController ? "ENABLED" : "DISABLED"}`,
   );
   console.log(
     `  Certificate validation: ${ignoreCertificateErrors ? "DISABLED" : "ENABLED"}`,

@@ -5,6 +5,7 @@ export interface AapMcpConfig {
   "ignore-certificate-errors"?: boolean;
   enable_metrics?: boolean;
   allow_write_operations?: boolean;
+  standalone_controller?: boolean;
   base_url?: string;
   session_timeout?: number;
   "default-page-size"?: number;

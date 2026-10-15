@@ -120,6 +120,11 @@ MCP_PORT=3000
 # Change this to true to get access to the write operations
 #ALLOW_WRITE_OPERATIONS=true
 
+# Set to true for a standalone controller without the platform gateway (AWX):
+# users are read from /api/v2/me/ and controller tools call /api/v2 paths.
+# Also settable via `standalone_controller` in aap-mcp.yaml.
+#STANDALONE_CONTROLLER=true
+
 # Extra browser origins allowed for DNS-rebinding protection (comma-separated).
 # The gateway (BASE_URL) and localhost are always allowed; this is additive.
 # Also settable via `allowed_origins` in aap-mcp.yaml (env var takes precedence).

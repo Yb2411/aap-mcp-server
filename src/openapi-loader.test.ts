@@ -282,6 +282,18 @@ describe("OpenAPI Loader", () => {
       expect(result.description).toBe("List jobs\n\nExtra details");
     });
 
+    it("should keep the /api/v2 path for a standalone controller", () => {
+      const mockTool = createMockTool({
+        name: "api_jobs_list",
+        pathTemplate: "/api/v2/jobs/",
+      });
+
+      const result = reformatControllerTool(mockTool, true);
+
+      expect(result.name).toBe("jobs_list");
+      expect(result.pathTemplate).toBe("/api/v2/jobs/");
+    });
+
     it("should handle tools without path template", () => {
       const mockTool = createMockTool({
         name: "api_test_tool",
@@ -406,6 +418,17 @@ describe("OpenAPI Loader", () => {
       expect(typeof functions.galaxy).toBe("function");
       expect(typeof functions.controller).toBe("function");
       expect(typeof functions.lightspeed).toBe("function");
+    });
+
+    it("should pass the standalone controller mode to the controller", () => {
+      const tool = () =>
+        createMockTool({ name: "api_jobs_list", pathTemplate: "/api/v2/jobs/" });
+
+      const gateway = getReformatFunctions().controller(tool());
+      const standalone = getReformatFunctions(true).controller(tool());
+
+      expect(gateway && gateway.pathTemplate).toBe("/api/controller/v2/jobs/");
+      expect(standalone && standalone.pathTemplate).toBe("/api/v2/jobs/");
     });
   });
 
